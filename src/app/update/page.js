@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useUser } from "../context/userContext";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const fileInputRef = useRef(null);
   const API_BASE = "http://todoo.runasp.net/api/account";
@@ -23,23 +25,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
-      setError("");
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Token not found");
-          setLoading(false);
-          return;
-        }
+        if (!token) throw new Error("Token not found");
 
         const res = await fetch(`${API_BASE}/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await res.json();
-        console.log("📦 Profile response:", data);
 
         if (res.ok) {
           setFullName(data.fullName || "");
@@ -48,7 +41,6 @@ export default function ProfilePage() {
           setError(data.message || "Failed to fetch profile");
         }
       } catch (err) {
-        console.error("❌ Profile fetch error:", err);
         setError("Connection error");
       } finally {
         setLoading(false);
@@ -58,16 +50,9 @@ export default function ProfilePage() {
     fetchProfile();
   }, [setProfileImage]);
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (!file) {
-      setError("Please select a file");
-      return;
-    }
+    if (!file) return;
 
     setLoading(true);
     setError("");
@@ -75,11 +60,7 @@ export default function ProfilePage() {
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Token not found. Please login again.");
-        setLoading(false);
-        return;
-      }
+      if (!token) throw new Error("Token not found");
 
       const fieldNames = [
         "file",
@@ -89,38 +70,27 @@ export default function ProfilePage() {
         "formFile",
         "upload",
       ];
-
-      let uploadSuccess = false;
-
       for (let name of fieldNames) {
         const formData = new FormData();
         formData.append(name, file);
 
         const res = await fetch(`${API_BASE}/upload-photo`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
         const data = await res.json();
-        console.log(`🖼️ Tried field "${name}":`, data);
-
         if (res.ok) {
           const newImage = data.profileImage || URL.createObjectURL(file);
           setProfileImage(newImage);
-          setSuccess(`✅ Photo uploaded using field "${name}"`);
-          uploadSuccess = true;
-          break;
+          setSuccess(`✅ Photo uploaded`);
+          return;
         }
       }
 
-      if (!uploadSuccess) {
-        setError("❌ Failed to upload photo with all field names.");
-      }
-    } catch (err) {
-      console.error("❌ Upload photo error:", err);
+      setError("❌ Failed to upload photo");
+    } catch {
       setError("Error uploading photo");
     } finally {
       setLoading(false);
@@ -135,12 +105,6 @@ export default function ProfilePage() {
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Token not found");
-        setLoading(false);
-        return;
-      }
-
       const res = await fetch(`${API_BASE}/profile`, {
         method: "PUT",
         headers: {
@@ -151,18 +115,13 @@ export default function ProfilePage() {
       });
 
       const data = await res.json();
-      console.log("✏️ Update name response:", data);
-
       if (res.ok) {
         setSuccess("✅ Name updated successfully");
-        setTimeout(() => {
-          router.push("/todo");
-        }, 1500);
+        setTimeout(() => router.push("/todo"), 1500);
       } else {
         setError(data.message || "Failed to update name");
       }
-    } catch (err) {
-      console.error("❌ Name update error:", err);
+    } catch {
       setError("Error updating name");
     } finally {
       setLoading(false);
@@ -170,59 +129,45 @@ export default function ProfilePage() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (newPassword !== confirmPassword)
+      return setError("Passwords do not match");
 
+    setShowConfirmModal(true);
+  };
+
+  const confirmPasswordChange = async () => {
+    setShowConfirmModal(false);
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Token not found");
-        setLoading(false);
-        return;
-      }
-
       const res = await fetch(`${API_BASE}/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-          confirmPassword,
-        }),
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       });
 
       const text = await res.text();
       let data = {};
       try {
         data = text ? JSON.parse(text) : {};
-      } catch (err) {
-        console.error("❌ Failed to parse response JSON:", err);
-      }
-
-      console.log("🔐 Change password response:", data);
+      } catch {}
 
       if (res.ok) {
         setSuccess("✅ Password changed successfully");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setTimeout(() => {
-          router.push("/todo");
-        }, 1500);
+        setTimeout(() => router.push("/todo"), 1500);
       } else {
         setError(data.message || "Failed to change password");
       }
-    } catch (err) {
-      console.error("❌ Password error:", err);
+    } catch {
       setError("Error changing password");
     } finally {
       setLoading(false);
@@ -230,110 +175,125 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 sm:p-12">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row gap-8">
-        <div className="sm:w-1/3 flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-blue-800 mb-4 w-full text-left">
-            Update Your Profile
-          </h1>
+    <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex justify-center items-center z-50 p-4">
+      <motion.div
+        initial={{ scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4"
+      >
+        <h2 className="text-2xl font-bold text-center text-blue-700">
+          Update Profile
+        </h2>
+
+        <div className="flex justify-center">
           <div
-            className="w-[250px] h-[250px] rounded-full overflow-hidden border-4 border-blue-600 cursor-pointer"
-            onClick={handleImageClick}
+            className="w-40 h-40 overflow-hidden cursor-pointer rounded-xl border border-gray-300"
+            onClick={() => fileInputRef.current.click()}
           >
             <Image
-              src={
-                profileImage && profileImage.trim() !== ""
-                  ? profileImage
-                  : "/2221.png"
-              }
+              src={profileImage || "/212.jpg"}
               alt="Profile"
-              width={250}
-              height={250}
-              className="object-cover"
+              width={160}
+              height={160}
+              className="object-cover w-full h-full"
+              onError={(e) => {
+                e.target.src = "/212.jpg";
+              }}
             />
             <input
               type="file"
               accept="image/*"
               ref={fileInputRef}
-              className="hidden"
               onChange={handleImageChange}
+              className="hidden"
               disabled={loading}
             />
           </div>
         </div>
 
-        <div className="sm:w-2/3">
-          {error && <p className="text-red-600 mb-4">{error}</p>}
-          {success && <p className="text-green-600 mb-4">{success}</p>}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        {success && (
+          <p className="text-green-600 text-sm text-center">{success}</p>
+        )}
 
-          <div className="mb-4">
-            <label className="block text-gray-600 mb-2 font-semibold">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              disabled={loading}
-            />
-            <button
-              onClick={handleUpdateName}
-              className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
-              disabled={loading}
-            >
-              Update Name
-            </button>
-          </div>
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          disabled={loading}
+        />
+        <button
+          onClick={handleUpdateName}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          disabled={loading}
+        >
+          Update Name
+        </button>
 
-          <div className="mb-4">
-            <label className="block text-gray-600 mb-2 font-semibold">
-              Current Password
-            </label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              disabled={loading}
-            />
-          </div>
+        <input
+          type="password"
+          placeholder="Current Password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          disabled={loading}
+        />
+        <input
+          type="password"
+          placeholder="New Password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          disabled={loading}
+        />
+        <input
+          type="password"
+          placeholder="Confirm New Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          disabled={loading}
+        />
 
-          <div className="mb-4">
-            <label className="block text-gray-600 mb-2 font-semibold">
-              New Password
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              disabled={loading}
-            />
-          </div>
+        <button
+          onClick={handleChangePassword}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          disabled={loading}
+        >
+          Update Password
+        </button>
+      </motion.div>
 
-          <div className="mb-6">
-            <label className="block text-gray-600 mb-2 font-semibold">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            onClick={handleChangePassword}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-semibold transition"
-            disabled={loading}
+      {/* Confirm Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white p-6 rounded-2xl shadow-lg space-y-4 max-w-sm w-full"
           >
-            Change Password
-          </button>
+            <h3 className="text-lg font-bold text-blue-700 text-center">
+              Are you sure you want to update your profile?
+            </h3>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPasswordChange}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Yes, Confirm
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

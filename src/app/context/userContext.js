@@ -5,15 +5,16 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [profileImage, setProfileImage] = useState("/2221.png");
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
     if (savedImage) {
       setProfileImage(savedImage);
+    } else {
+      // لو مفيش صورة محفوظة في اللوكال ستوريج، نحط الصورة الافتراضية
+      setProfileImage("/212.jpg");
     }
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -21,10 +22,6 @@ export function UserProvider({ children }) {
       localStorage.setItem("profileImage", profileImage);
     }
   }, [profileImage]);
-
-  if (isLoading) {
-    return null;
-  }
 
   return (
     <UserContext.Provider value={{ profileImage, setProfileImage }}>

@@ -19,7 +19,6 @@ export default function Sidebar({
 
   return (
     <>
-      {/* ✅ Sidebar للموبايل */}
       <div
         className={`fixed top-0 left-0 h-full w-64 z-[9999] transform transition-transform duration-300 sm:hidden 
         ${sharedStyles}
@@ -55,7 +54,6 @@ export default function Sidebar({
         </ul>
       </div>
 
-      {/* ✅ Sidebar للكمبيوتر */}
       <div
         className={`hidden sm:block w-64 p-6 min-h-screen sticky top-0 ${sharedStyles}`}
       >
@@ -66,7 +64,7 @@ export default function Sidebar({
               <button
                 className={`w-full text-left px-4 py-2 rounded-md font-medium transition ${
                   activeTab === item.id
-                    ? "bg-white/20 text-white" // ✅ نفس التغيير هنا
+                    ? "bg-white/20 text-white"
                     : "hover:bg-white/10 text-white"
                 }`}
                 onClick={() => setActiveTab(item.id)}

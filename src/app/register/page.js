@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { z } from "zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import LoadingSpinner from "../LoadingSpinner";
 
 const registerSchema = z.object({
@@ -11,6 +12,8 @@ const registerSchema = z.object({
 });
 
 export default function Register() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     username: "",
     passwordHash: "",
@@ -76,6 +79,10 @@ export default function Register() {
 
       setSuccessMsg("✅ Registration successful!");
       setFormData({ username: "", passwordHash: "" });
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
     } catch (err) {
       console.error("Request failed:", err);
       setErrors({ general: "Network error. Please check your connection." });
