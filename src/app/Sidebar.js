@@ -12,19 +12,24 @@ export default function Sidebar({
     { id: "add", label: "Add New" },
   ];
 
+  const sharedStyles = `
+    bg-transparent text-white 
+    backdrop-blur-md border-r border-white/20 shadow-xl
+  `;
+
   return (
     <>
       {/* ✅ Sidebar للموبايل */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white/30 backdrop-blur-md z-[9999] shadow-lg transform transition-transform duration-300 sm:hidden ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 z-[9999] transform transition-transform duration-300 sm:hidden 
+        ${sharedStyles}
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex justify-between items-center px-4 py-4 border-b border-white/40">
-          <h2 className="text-xl font-bold text-blue-800">Menu</h2>
+        <div className="flex justify-between items-center px-4 py-4 border-b border-white/30">
+          <h2 className="text-xl font-bold text-white">Menu</h2>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-blue-800 text-xl"
+            className="text-white text-xl"
           >
             ✕
           </button>
@@ -35,8 +40,8 @@ export default function Sidebar({
               <button
                 className={`w-full text-left px-4 py-2 rounded-md font-medium transition ${
                   activeTab === item.id
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-100 text-blue-800"
+                    ? "bg-white/20 text-white" // ✅ هنا التغيير
+                    : "hover:bg-white/10 text-white"
                 }`}
                 onClick={() => {
                   setActiveTab(item.id);
@@ -51,7 +56,9 @@ export default function Sidebar({
       </div>
 
       {/* ✅ Sidebar للكمبيوتر */}
-      <div className="hidden sm:block bg-white/30 backdrop-blur-md text-blue-800 w-64 p-6 min-h-screen sticky top-0 border-r border-white/40">
+      <div
+        className={`hidden sm:block w-64 p-6 min-h-screen sticky top-0 ${sharedStyles}`}
+      >
         <h2 className="text-2xl font-bold mb-6">Menu</h2>
         <ul className="space-y-3">
           {items.map((item) => (
@@ -59,8 +66,8 @@ export default function Sidebar({
               <button
                 className={`w-full text-left px-4 py-2 rounded-md font-medium transition ${
                   activeTab === item.id
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-100 text-blue-800"
+                    ? "bg-white/20 text-white" // ✅ نفس التغيير هنا
+                    : "hover:bg-white/10 text-white"
                 }`}
                 onClick={() => setActiveTab(item.id)}
               >

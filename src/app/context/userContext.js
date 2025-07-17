@@ -5,13 +5,15 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [profileImage, setProfileImage] = useState("/img.webp");
+  const [profileImage, setProfileImage] = useState("/2221.png");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
     if (savedImage) {
       setProfileImage(savedImage);
     }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -19,6 +21,10 @@ export function UserProvider({ children }) {
       localStorage.setItem("profileImage", profileImage);
     }
   }, [profileImage]);
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <UserContext.Provider value={{ profileImage, setProfileImage }}>

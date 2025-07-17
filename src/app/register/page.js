@@ -34,72 +34,79 @@ export default function Register() {
 
     if (!result.success) {
       const fieldErrors = {};
-      if (Array.isArray(result.error.errors)) {
-        result.error.errors.forEach((err) => {
-          const field = err.path[0];
-          fieldErrors[field] = err.message;
-        });
-      } else {
-        fieldErrors.general = "Validation error occurred";
-      }
+      result.error.errors.forEach((err) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
       setErrors(fieldErrors);
       return;
     }
 
     setLoading(true);
-    try {
-      console.log("📤 Sending data to backend:", formData);
 
+    try {
       const res = await fetch("http://todoo.runasp.net/api/account/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      console.log("📥 Response Status:", res.status);
-      console.log("📥 Response Headers:", Array.from(res.headers.entries()));
-
-      const responseText = await res.text();
-      console.log("📥 Raw Response Text:", responseText);
-
-      let responseJson = {};
+      const text = await res.text();
+      let json = {};
       try {
-        responseJson = JSON.parse(responseText);
-        console.log("📦 Parsed JSON:", responseJson);
+        json = JSON.parse(text);
       } catch {
-        console.warn("⚠️ Response is not valid JSON");
-        responseJson = { message: responseText };
+        json = { message: text };
       }
 
       if (!res.ok) {
-        throw new Error(responseJson.message || "❌ Registration failed");
+        if (res.status >= 500) {
+          setErrors({
+            general:
+              "Something went wrong on the server. Please try again later.",
+          });
+        } else {
+          setErrors({
+            general:
+              json.message || "Registration failed. Please check your data.",
+          });
+        }
+        return;
       }
 
-      setSuccessMsg("✅ Registered successfully!");
+      setSuccessMsg("✅ Registration successful!");
       setFormData({ username: "", passwordHash: "" });
     } catch (err) {
-      console.error("🔥 Error:", err.message);
-      if (err.message.includes("CORS")) {
-        console.warn("🚫 CORS issue detected");
-      }
-      setErrors({ general: err.message });
+      console.error("Request failed:", err);
+      setErrors({ general: "Network error. Please check your connection." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-        <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">
-          Register
-        </h2>
+    <div className="relative min-h-screen flex items-center justify-center px-4">
+      <div
+        className="fixed inset-0 z-0 bg-[#0a0a23]"
+        style={{
+          backgroundImage: "url('/21.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      ></div>
+      <div className="fixed inset-0 z-0 bg-black/60 backdrop-blur-sm"></div>
 
-        <form onSubmit={handleSubmit} noValidate autoComplete="off">
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 mb-1">
+      <div className="relative z-10 bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl shadow-xl p-8 w-full max-w-md text-white">
+        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          autoComplete="off"
+          className="space-y-5"
+        >
+          <div>
+            <label htmlFor="username" className="block mb-1 text-white/80">
               Username
             </label>
             <input
@@ -109,19 +116,19 @@ export default function Register() {
               value={formData.username}
               onChange={handleChange}
               placeholder="Enter your username"
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              className={`w-full px-4 py-3 rounded-md bg-white/20 text-white placeholder:text-white/70 border ${
                 errors.username
-                  ? "border-red-500 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-blue-400"
-              }`}
+                  ? "border-red-500"
+                  : "border-white/30 focus:border-white"
+              } focus:outline-none`}
             />
             {errors.username && (
-              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+              <p className="text-red-400 text-sm mt-1">{errors.username}</p>
             )}
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="passwordHash" className="block text-gray-700 mb-1">
+          <div>
+            <label htmlFor="passwordHash" className="block mb-1 text-white/80">
               Password
             </label>
             <input
@@ -131,38 +138,38 @@ export default function Register() {
               value={formData.passwordHash}
               onChange={handleChange}
               placeholder="Enter your password"
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              className={`w-full px-4 py-3 rounded-md bg-white/20 text-white placeholder:text-white/70 border ${
                 errors.passwordHash
-                  ? "border-red-500 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-blue-400"
-              }`}
+                  ? "border-red-500"
+                  : "border-white/30 focus:border-white"
+              } focus:outline-none`}
             />
             {errors.passwordHash && (
-              <p className="text-red-500 text-sm mt-1">{errors.passwordHash}</p>
+              <p className="text-red-400 text-sm mt-1">{errors.passwordHash}</p>
             )}
           </div>
 
           {errors.general && (
-            <p className="text-red-600 text-center mb-4">{errors.general}</p>
+            <p className="text-red-400 text-center">{errors.general}</p>
           )}
 
           {successMsg && (
-            <p className="text-green-600 text-center mb-4">{successMsg}</p>
+            <p className="text-green-400 text-center">{successMsg}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-md transition"
+            className="w-full bg-white/20 hover:bg-white/30 transition text-white font-semibold py-3 rounded-lg"
           >
             {loading ? <LoadingSpinner /> : "Register"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-gray-700">
+        <p className="mt-6 text-center text-white/80 text-sm">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Login here.
+          <Link href="/login" className="text-blue-400 hover:underline">
+            Login here
           </Link>
         </p>
       </div>

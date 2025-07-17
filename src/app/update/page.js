@@ -28,6 +28,7 @@ export default function ProfilePage() {
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Token not found");
+          setLoading(false);
           return;
         }
 
@@ -76,6 +77,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Token not found. Please login again.");
+        setLoading(false);
         return;
       }
 
@@ -135,6 +137,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Token not found");
+        setLoading(false);
         return;
       }
 
@@ -180,6 +183,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Token not found");
+        setLoading(false);
         return;
       }
 
@@ -232,13 +236,20 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-bold text-blue-800 mb-4 w-full text-left">
             Update Your Profile
           </h1>
-          <div className="relative cursor-pointer" onClick={handleImageClick}>
+          <div
+            className="w-[250px] h-[250px] rounded-full overflow-hidden border-4 border-blue-600 cursor-pointer"
+            onClick={handleImageClick}
+          >
             <Image
-              src={profileImage || "/a.jpg"}
+              src={
+                profileImage && profileImage.trim() !== ""
+                  ? profileImage
+                  : "/2221.png"
+              }
               alt="Profile"
               width={250}
               height={250}
-              className="rounded-full object-cover border-4 border-blue-200"
+              className="object-cover"
             />
             <input
               type="file"
