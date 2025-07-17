@@ -97,15 +97,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateName = async () => {
-    if (!fullName.trim()) return;
+  const handleUpdateProfile = () => {
+    if (!fullName.trim()) return setError("Name is required");
+    if (newPassword && newPassword !== confirmPassword)
+      return setError("Passwords do not match");
+    setShowConfirmModal(true);
+  };
+
+  const confirmProfileUpdate = async () => {
+    setShowConfirmModal(false);
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/profile`, {
+
+      const nameRes = await fetch(`${API_BASE}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -114,61 +122,41 @@ export default function ProfilePage() {
         body: JSON.stringify({ fullName }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess("✅ Name updated successfully");
-        setTimeout(() => router.push("/todo"), 1500);
-      } else {
-        setError(data.message || "Failed to update name");
+      const nameData = await nameRes.json();
+      if (!nameRes.ok)
+        throw new Error(nameData.message || "Failed to update name");
+
+      if (currentPassword && newPassword && confirmPassword) {
+        const passwordRes = await fetch(`${API_BASE}/change-password`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          }),
+        });
+
+        const text = await passwordRes.text();
+        let passwordData = {};
+        try {
+          passwordData = text ? JSON.parse(text) : {};
+        } catch {}
+
+        if (!passwordRes.ok)
+          throw new Error(passwordData.message || "Failed to change password");
       }
-    } catch {
-      setError("Error updating name");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword)
-      return setError("Passwords do not match");
-
-    setShowConfirmModal(true);
-  };
-
-  const confirmPasswordChange = async () => {
-    setShowConfirmModal(false);
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/change-password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
-      });
-
-      const text = await res.text();
-      let data = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {}
-
-      if (res.ok) {
-        setSuccess("✅ Password changed successfully");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setTimeout(() => router.push("/todo"), 1500);
-      } else {
-        setError(data.message || "Failed to change password");
-      }
-    } catch {
-      setError("Error changing password");
+      setSuccess("✅ Profile updated successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => router.push("/todo"), 1500);
+    } catch (err) {
+      setError(err.message || "Update failed");
     } finally {
       setLoading(false);
     }
@@ -224,13 +212,6 @@ export default function ProfilePage() {
           className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
           disabled={loading}
         />
-        <button
-          onClick={handleUpdateName}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-          disabled={loading}
-        >
-          Update Name
-        </button>
 
         <input
           type="password"
@@ -258,15 +239,14 @@ export default function ProfilePage() {
         />
 
         <button
-          onClick={handleChangePassword}
+          onClick={handleUpdateProfile}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
           disabled={loading}
         >
-          Update Password
+          Update Profile
         </button>
       </motion.div>
 
-      {/* Confirm Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] flex items-center justify-center z-50">
           <motion.div
@@ -285,7 +265,7 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button
-                onClick={confirmPasswordChange}
+                onClick={confirmProfileUpdate}
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
               >
                 Yes, Confirm
