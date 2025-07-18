@@ -185,7 +185,7 @@ export default function ProfilePage() {
               height={160}
               className="object-cover w-full h-full"
               onError={(e) => {
-                e.target.src = "/212.jpg";
+                e.target.src = "/profile-default.jpg";
               }}
             />
             <input
