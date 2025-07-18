@@ -13,6 +13,8 @@ export default function TodoPage() {
   const router = useRouter();
   const dropdownRef = useRef(null);
   const { profileImage } = useUser();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [todoIdToDelete, setTodoIdToDelete] = useState(null);
 
   const [todos, setTodos] = useState([]);
   const [filteredTodos, setFilteredTodos] = useState([]);
@@ -27,6 +29,23 @@ export default function TodoPage() {
 
   const [editingId, setEditingId] = useState(null);
   const [editTodoData, setEditTodoData] = useState({});
+
+  const confirmDelete = (id) => {
+    setTodoIdToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!todoIdToDelete) return;
+    await deleteTodo(todoIdToDelete);
+    setShowDeleteModal(false);
+    setTodoIdToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setTodoIdToDelete(null);
+  };
 
   const apiBase = "http://todoo.runasp.net/api/todo";
   const token = Cookies.get("token");
@@ -486,7 +505,7 @@ export default function TodoPage() {
                               Edit
                             </button>
                             <button
-                              onClick={() => deleteTodo(todo.id)}
+                              onClick={() => confirmDelete(todo.id)}
                               className="px-3 py-1 bg-red-600 rounded text-white hover:bg-red-700 transition"
                             >
                               Delete
@@ -502,6 +521,29 @@ export default function TodoPage() {
           </div>
         </div>
       </main>
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white/10 text-white p-6 rounded-2xl shadow-xl w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-4 text-center">
+              Are you sure you want to delete this task?
+            </h2>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 transition"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 rounded bg-white/20 hover:bg-white/30 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

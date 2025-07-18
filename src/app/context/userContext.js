@@ -5,18 +5,16 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [profileImage, setProfileImage] = useState("/profile-default.jpg");
+  const [profileImage, setProfileImage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
-
-    if (savedImage) {
+    if (savedImage && savedImage !== "null" && savedImage !== "") {
       setProfileImage(savedImage);
     } else {
       setProfileImage("/profile-default.jpg");
     }
-
     setIsLoading(false);
   }, []);
 

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useUser } from "../context/userContext";
@@ -21,6 +20,7 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null);
   const API_BASE = "http://todoo.runasp.net/api/account";
+  const SERVER_URL = "http://todoo.runasp.net";
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -36,7 +36,19 @@ export default function ProfilePage() {
 
         if (res.ok) {
           setFullName(data.fullName || "");
-          if (data.profileImage) setProfileImage(data.profileImage);
+          if (
+            data.profileImage &&
+            data.profileImage !== "null" &&
+            data.profileImage !== "" &&
+            data.profileImage !== "/212.jpg"
+          ) {
+            const fullImageUrl = data.profileImage.startsWith("http")
+              ? data.profileImage
+              : SERVER_URL + data.profileImage;
+            setProfileImage(fullImageUrl);
+          } else {
+            setProfileImage("/profile-default.jpg");
+          }
         } else {
           setError(data.message || "Failed to fetch profile");
         }
@@ -53,6 +65,9 @@ export default function ProfilePage() {
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const tempImage = URL.createObjectURL(file);
+    setProfileImage(tempImage);
 
     setLoading(true);
     setError("");
@@ -82,9 +97,14 @@ export default function ProfilePage() {
 
         const data = await res.json();
         if (res.ok) {
-          const newImage = data.profileImage || URL.createObjectURL(file);
-          setProfileImage(newImage);
-          setSuccess(`✅ Photo uploaded`);
+          const newImage = data.imageUrl || tempImage;
+          const fullImageUrl = newImage.startsWith("http")
+            ? newImage
+            : SERVER_URL + newImage;
+
+          setProfileImage(fullImageUrl);
+          localStorage.setItem("profileImage", fullImageUrl);
+          setSuccess("✅ Photo uploaded");
           return;
         }
       }
@@ -162,8 +182,24 @@ export default function ProfilePage() {
     }
   };
 
+  const imageToShow =
+    profileImage &&
+    profileImage !== "null" &&
+    profileImage !== "" &&
+    profileImage !== "/212.jpg"
+      ? profileImage
+      : "/profile-default.jpg";
+
   return (
     <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex justify-center items-center z-50 p-4">
+      <button
+        onClick={() => router.push("/todo")}
+        className="absolute top-4 right-4 text-3xl font-bold text-white hover:text-red-500 z-50"
+        aria-label="Close"
+      >
+        &times;
+      </button>
+
       <motion.div
         initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -179,14 +215,11 @@ export default function ProfilePage() {
             onClick={() => fileInputRef.current.click()}
           >
             <Image
-              src={profileImage || "/profile-default.jpg"}
+              src={imageToShow}
               alt="Profile"
               width={160}
               height={160}
-              className="object-cover w-full h-full"
-              onError={(e) => {
-                e.target.src = "/profile-default.jpg";
-              }}
+              className="object-cover w-full h-full rounded-xl"
             />
             <input
               type="file"
