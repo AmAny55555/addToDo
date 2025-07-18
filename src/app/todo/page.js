@@ -261,6 +261,7 @@ export default function TodoPage() {
               <button
                 onClick={() => {
                   Cookies.remove("token");
+                  localStorage.removeItem("profileImage"); // امسح صورة المستخدم القديم
                   router.push("/login");
                 }}
                 className="w-full text-left px-4 py-2 hover:bg-red-100 text-red-500 flex items-center gap-2"

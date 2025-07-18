@@ -5,22 +5,27 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [profileImage, setProfileImage] = useState(null);
+  const defaultImage = "/profile-default.jpg";
+  const [profileImage, setProfileImage] = useState(defaultImage);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
-    if (savedImage && savedImage !== "null" && savedImage !== "") {
-      setProfileImage(savedImage);
+
+    if (!savedImage || savedImage === "null" || savedImage === "") {
+      setProfileImage(defaultImage);
     } else {
-      setProfileImage("/profile-default.jpg");
+      setProfileImage(savedImage);
     }
+
     setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    if (profileImage) {
+    if (profileImage && profileImage !== defaultImage) {
       localStorage.setItem("profileImage", profileImage);
+    } else {
+      localStorage.removeItem("profileImage");
     }
   }, [profileImage]);
 

@@ -75,6 +75,9 @@ export default function Login() {
           Cookies.set("token", data.token, { expires: 7 });
         }
 
+        // 🟢 إضافة هنا: احفظ صورة البروفايل الافتراضية للمستخدم الجديد
+        localStorage.setItem("profileImage", "/profile-default.jpg");
+
         router.push("/todo");
       } else if (response.status >= 500) {
         setErrors({ general: "Server error. Please try again later." });
