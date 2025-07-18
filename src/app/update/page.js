@@ -179,7 +179,7 @@ export default function ProfilePage() {
             onClick={() => fileInputRef.current.click()}
           >
             <Image
-              src={profileImage || "/212.jpg"}
+              src={profileImage || "/profile-default.jpg"}
               alt="Profile"
               width={160}
               height={160}
